@@ -1,6 +1,6 @@
 <?php
 
-$host = "192.168.56.101";
+$host = "localhost";
 $usuario = "root";
 $senha = "";
 $banco = "technote";
