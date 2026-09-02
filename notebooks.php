@@ -182,7 +182,7 @@ $usuarioLogado = isset($_SESSION['usuario_id']);
                             href="login.php"
                             class="btn-card"
                         >
-                            🔒 Faça login para comprar
+                             Faça login para comprar
                         </a>
 
                     <?php } ?>

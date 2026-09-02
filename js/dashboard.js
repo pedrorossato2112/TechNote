@@ -1,0 +1,129 @@
+"use strict";
+const moeda = new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+});
+function definirTexto(id, valor) {
+    const elemento = document.getElementById(id);
+    if (elemento) {
+        elemento.textContent = valor;
+    }
+}
+function escaparHtml(valor) {
+    const elemento = document.createElement('div');
+    elemento.textContent = valor;
+    return elemento.innerHTML;
+}
+function calcularIndicadores(vendas) {
+    const acumulado = vendas.reduce((resultado, venda) => {
+        resultado.faturamento += venda.quantidade * venda.precoUnitario;
+        resultado.unidadesVendidas += venda.quantidade;
+        resultado.pedidos.add(venda.pedidoId);
+        return resultado;
+    }, { faturamento: 0, unidadesVendidas: 0, pedidos: new Set() });
+    const totalPedidos = acumulado.pedidos.size;
+    const ticketMedio = totalPedidos > 0 ? acumulado.faturamento / totalPedidos : 0;
+    return {
+        faturamento: acumulado.faturamento,
+        unidadesVendidas: acumulado.unidadesVendidas,
+        totalPedidos,
+        ticketMedio,
+    };
+}
+function gerarRanking(vendas) {
+    const totais = vendas.reduce((resultado, venda) => {
+        const atual = resultado[venda.produtoId] ?? { nome: venda.produto, quantidade: 0 };
+        atual.quantidade += venda.quantidade;
+        resultado[venda.produtoId] = atual;
+        return resultado;
+    }, {});
+    return Object.values(totais)
+        .sort((produtoA, produtoB) => produtoB.quantidade - produtoA.quantidade)
+        .slice(0, 5);
+}
+function renderizarEstoqueCritico(produtos) {
+    const container = document.getElementById('lista-estoque-critico');
+    if (!container) {
+        return;
+    }
+    const criticos = produtos.filter((produto) => produto.estoque <= 3).slice(0, 5);
+    definirTexto('contador-estoque-critico', String(criticos.length));
+    if (criticos.length === 0) {
+        container.innerHTML = '<div class="dashboard-empty"><span>✓</span><p>Nenhum produto com estoque crítico.</p></div>';
+        return;
+    }
+    container.innerHTML = `<div class="dashboard-list">${criticos
+        .map((produto) => `
+                <div class="dashboard-list-item">
+                    <div>
+                        <strong>${escaparHtml(produto.nome)}</strong>
+                        <span>${escaparHtml(produto.marca)}</span>
+                    </div>
+                    <div class="stock-number">${produto.estoque}<small>un.</small></div>
+                </div>`)
+        .join('')}</div>`;
+}
+function renderizarRanking(vendas) {
+    const container = document.getElementById('ranking-produtos');
+    if (!container) {
+        return;
+    }
+    const ranking = gerarRanking(vendas);
+    if (ranking.length === 0) {
+        container.innerHTML = '<div class="dashboard-empty"><span>★</span><p>Nenhuma venda registrada para gerar o ranking.</p></div>';
+        return;
+    }
+    const maiorQuantidade = ranking[0]?.quantidade ?? 0;
+    container.innerHTML = `<div class="ranking-list">${ranking
+        .map((produto, indice) => {
+        const largura = maiorQuantidade > 0 ? (produto.quantidade / maiorQuantidade) * 100 : 0;
+        return `
+                <div class="ranking-item">
+                    <div class="ranking-position">${String(indice + 1).padStart(2, '0')}</div>
+                    <div class="ranking-product">
+                        <strong>${escaparHtml(produto.nome)}</strong>
+                        <span>${produto.quantidade} unidades vendidas</span>
+                    </div>
+                    <div class="ranking-bar"><div style="width:${largura}%"></div></div>
+                </div>`;
+    })
+        .join('')}</div>`;
+}
+function renderizarDashboard(dados) {
+    const indicadores = calcularIndicadores(dados.vendas);
+    const estoqueCritico = dados.estoque.filter((produto) => produto.estoque <= 3).length;
+    definirTexto('indicador-produtos', String(dados.resumo.totalProdutos));
+    definirTexto('indicador-pedidos', String(indicadores.totalPedidos));
+    definirTexto('indicador-estoque', String(dados.resumo.totalEstoque));
+    definirTexto('indicador-clientes', String(dados.resumo.totalClientes));
+    definirTexto('indicador-valor-estoque', moeda.format(dados.resumo.valorEstoque));
+    definirTexto('indicador-faturamento', moeda.format(indicadores.faturamento));
+    definirTexto('indicador-ticket-medio', moeda.format(indicadores.ticketMedio));
+    definirTexto('indicador-estoque-baixo', String(estoqueCritico));
+    renderizarEstoqueCritico(dados.estoque);
+    renderizarRanking(dados.vendas);
+    definirTexto('dashboard-api-status', 'DADOS ATUALIZADOS');
+}
+async function carregarDashboard() {
+    definirTexto('dashboard-api-status', 'ATUALIZANDO...');
+    try {
+        const resposta = await fetch('../api/dashboard.php', {
+            headers: { Accept: 'application/json' },
+        });
+        const dados = (await resposta.json());
+        if (!resposta.ok) {
+            throw new Error(dados.erro ?? 'Falha ao consultar a API.');
+        }
+        renderizarDashboard(dados);
+    }
+    catch (erro) {
+        console.error('Falha ao carregar a dashboard:', erro);
+        definirTexto('dashboard-api-status', 'DADOS INDISPONÍVEIS');
+        const aviso = document.getElementById('dashboard-api-aviso');
+        if (aviso) {
+            aviso.hidden = false;
+            aviso.textContent = 'Não foi possível atualizar os indicadores. Os dados exibidos podem estar desatualizados.';
+        }
+    }
+}
+void carregarDashboard();

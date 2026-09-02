@@ -355,13 +355,15 @@ if ($resultado) {
                 STATUS DO SISTEMA
             </span>
 
-            <strong>
-                ● ONLINE
+            <strong id="dashboard-api-status">
+                DADOS LOCAIS
             </strong>
 
         </div>
 
     </section>
+
+    <div id="dashboard-api-aviso" class="dashboard-api-aviso" hidden></div>
 
 
     <!-- ======================================
@@ -387,7 +389,7 @@ if ($resultado) {
 
             </div>
 
-            <strong class="dashboard-number">
+            <strong class="dashboard-number" id="indicador-produtos">
                 <?php echo $totalNotebooks; ?>
             </strong>
 
@@ -414,7 +416,7 @@ if ($resultado) {
 
             </div>
 
-            <strong class="dashboard-number">
+            <strong class="dashboard-number" id="indicador-pedidos">
                 <?php echo $totalPedidos; ?>
             </strong>
 
@@ -441,7 +443,7 @@ if ($resultado) {
 
             </div>
 
-            <strong class="dashboard-number">
+            <strong class="dashboard-number" id="indicador-estoque">
                 <?php echo $totalEstoque; ?>
             </strong>
 
@@ -468,7 +470,7 @@ if ($resultado) {
 
             </div>
 
-            <strong class="dashboard-number">
+            <strong class="dashboard-number" id="indicador-clientes">
                 <?php echo $totalClientes; ?>
             </strong>
 
@@ -494,7 +496,7 @@ if ($resultado) {
                 VALOR DO ESTOQUE
             </span>
 
-            <strong>
+            <strong id="indicador-valor-estoque">
                 R$
                 <?php
                 echo number_format(
@@ -519,7 +521,7 @@ if ($resultado) {
                 FATURAMENTO
             </span>
 
-            <strong>
+            <strong id="indicador-faturamento">
                 R$
                 <?php
                 echo number_format(
@@ -544,7 +546,7 @@ if ($resultado) {
                 TICKET MÉDIO
             </span>
 
-            <strong>
+            <strong id="indicador-ticket-medio">
                 R$
                 <?php
                 echo number_format(
@@ -569,7 +571,7 @@ if ($resultado) {
                 ESTOQUE CRÍTICO
             </span>
 
-            <strong>
+            <strong id="indicador-estoque-baixo">
                 <?php echo $estoqueBaixo; ?>
             </strong>
 
@@ -607,12 +609,14 @@ if ($resultado) {
 
                 </div>
 
-                <div class="panel-count">
+                <div class="panel-count" id="contador-estoque-critico">
                     <?php echo count($produtosBaixoEstoque); ?>
                 </div>
 
             </div>
 
+
+            <div id="lista-estoque-critico">
 
             <?php if (empty($produtosBaixoEstoque)) { ?>
 
@@ -673,6 +677,8 @@ if ($resultado) {
                 </div>
 
             <?php } ?>
+
+            </div>
 
         </div>
 
@@ -799,6 +805,8 @@ if ($resultado) {
         </div>
 
 
+        <div id="ranking-produtos">
+
         <?php if (empty($produtosMaisVendidos)) { ?>
 
             <div class="dashboard-empty">
@@ -903,6 +911,8 @@ if ($resultado) {
 
         <?php } ?>
 
+        </div>
+
     </section>
 
 
@@ -997,6 +1007,8 @@ if ($resultado) {
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
 ></script>
+
+<script src="../js/dashboard.js"></script>
 
 </body>
 

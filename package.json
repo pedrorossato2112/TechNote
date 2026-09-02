@@ -1,0 +1,11 @@
+{
+  "name": "technote-dashboard",
+  "private": true,
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "watch": "tsc --project tsconfig.json --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}

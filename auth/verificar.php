@@ -52,10 +52,5 @@ $_SESSION['usuario_tipo'] = $usuario['tipo'];
 
 $stmt->close();
 
-if ($usuario['tipo'] === 'admin') {
-    header("Location: ../admin/dashboard.php");
-    exit;
-}
-
 header("Location: ../index.php");
 exit;
