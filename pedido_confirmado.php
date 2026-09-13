@@ -1,7 +1,6 @@
 <?php
 session_start();
 include 'conexao.php';
-include 'includes/header.php';
 
 $id = intval($_GET['id'] ?? 0);
 
@@ -18,12 +17,13 @@ if (!$pedido) {
 $stmt = $conn->prepare("
     SELECT pi.*, n.nome AS notebook
     FROM pedido_itens pi
-    JOIN notebooks n ON pi.notebook_id = n.id
+    LEFT JOIN notebooks n ON pi.notebook_id = n.id
     WHERE pi.pedido_id = ?
 ");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $itens = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+include 'includes/header.php';
 ?>
 
 <section class="titulo-pagina">
@@ -45,7 +45,7 @@ $itens = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
             <?php foreach ($itens as $item) { ?>
                 <div class="resumo-item">
-                    <span><?php echo $item['notebook']; ?> × <?php echo $item['quantidade']; ?></span>
+                    <span><?php echo htmlspecialchars($item['notebook'] ?? 'Produto removido'); ?> × <?php echo $item['quantidade']; ?></span>
                     <span>R$ <?php echo number_format($item['preco_unitario'] * $item['quantidade'], 2, ',', '.'); ?></span>
                 </div>
             <?php } ?>

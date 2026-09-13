@@ -47,6 +47,27 @@ const moeda = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
 });
+let respostaAtual: DashboardResposta | null = null;
+
+function filtrarVendas(vendas: Venda[]): Venda[] {
+    const inicio = (document.getElementById('filtro-inicio') as HTMLInputElement | null)?.value ?? '';
+    const fim = (document.getElementById('filtro-fim') as HTMLInputElement | null)?.value ?? '';
+    const categoria = (document.getElementById('filtro-categoria') as HTMLSelectElement | null)?.value ?? '';
+    return vendas.filter((venda) => {
+        const data = venda.criadoEm.slice(0, 10);
+        const categorias = venda.categorias.split(',').map((nome) => nome.trim());
+        return (!inicio || data >= inicio) && (!fim || data <= fim)
+            && (!categoria || categorias.includes(categoria));
+    });
+}
+
+function carregarCategorias(vendas: Venda[]): void {
+    const seletor = document.getElementById('filtro-categoria') as HTMLSelectElement | null;
+    if (!seletor) return;
+    const nomes = [...new Set(vendas.flatMap((venda) => venda.categorias.split(',').map((nome) => nome.trim())))]
+        .filter((nome) => nome && nome !== 'Sem categoria').sort();
+    seletor.replaceChildren(new Option('Todas', ''), ...nomes.map((nome) => new Option(nome, nome)));
+}
 
 function definirTexto(id: string, valor: string): void {
     const elemento = document.getElementById(id);
@@ -159,7 +180,8 @@ function renderizarRanking(vendas: Venda[]): void {
 }
 
 function renderizarDashboard(dados: DashboardResposta): void {
-    const indicadores = calcularIndicadores(dados.vendas);
+    const vendasFiltradas = filtrarVendas(dados.vendas);
+    const indicadores = calcularIndicadores(vendasFiltradas);
     const estoqueCritico = dados.estoque.filter((produto) => produto.estoque <= 3).length;
 
     definirTexto('indicador-produtos', String(dados.resumo.totalProdutos));
@@ -172,7 +194,7 @@ function renderizarDashboard(dados: DashboardResposta): void {
     definirTexto('indicador-estoque-baixo', String(estoqueCritico));
 
     renderizarEstoqueCritico(dados.estoque);
-    renderizarRanking(dados.vendas);
+    renderizarRanking(vendasFiltradas);
     definirTexto('dashboard-api-status', 'DADOS ATUALIZADOS');
 }
 
@@ -189,6 +211,8 @@ async function carregarDashboard(): Promise<void> {
             throw new Error(dados.erro ?? 'Falha ao consultar a API.');
         }
 
+        respostaAtual = dados;
+        carregarCategorias(dados.vendas);
         renderizarDashboard(dados);
     } catch (erro: unknown) {
         console.error('Falha ao carregar a dashboard:', erro);
@@ -201,5 +225,18 @@ async function carregarDashboard(): Promise<void> {
         }
     }
 }
+
+for (const id of ['filtro-inicio', 'filtro-fim', 'filtro-categoria']) {
+    document.getElementById(id)?.addEventListener('change', () => {
+        if (respostaAtual) renderizarDashboard(respostaAtual);
+    });
+}
+document.getElementById('limpar-filtros')?.addEventListener('click', () => {
+    for (const id of ['filtro-inicio', 'filtro-fim', 'filtro-categoria']) {
+        const campo = document.getElementById(id) as HTMLInputElement | HTMLSelectElement | null;
+        if (campo) campo.value = '';
+    }
+    if (respostaAtual) renderizarDashboard(respostaAtual);
+});
 
 void carregarDashboard();

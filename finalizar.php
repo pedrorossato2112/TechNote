@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bind_param("i", $item['id']);
                 $stmt->execute();
                 $row = $stmt->get_result()->fetch_assoc();
-                if ($row['estoque'] < $item['quantidade']) {
+                if (!$row || (int)$row['estoque'] < (int)$item['quantidade']) {
                     throw new Exception("Estoque insuficiente para {$item['nome']}.");
                 }
             }

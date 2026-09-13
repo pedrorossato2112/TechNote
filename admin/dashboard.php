@@ -306,6 +306,8 @@ if ($resultado) {
                 Ver site
             </a>
 
+            <a href="cadastros.php" class="dashboard-nav-link">Gerenciar cadastros</a>
+
 
             <a
                 href="../logout.php"
@@ -364,6 +366,15 @@ if ($resultado) {
     </section>
 
     <div id="dashboard-api-aviso" class="dashboard-api-aviso" hidden></div>
+
+    <section class="container-fluid my-3" aria-label="Filtros de vendas">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-3"><label class="form-label" for="filtro-inicio">Vendas desde</label><input class="form-control" type="date" id="filtro-inicio"></div>
+        <div class="col-md-3"><label class="form-label" for="filtro-fim">Vendas até</label><input class="form-control" type="date" id="filtro-fim"></div>
+        <div class="col-md-3"><label class="form-label" for="filtro-categoria">Categoria</label><select class="form-select" id="filtro-categoria"><option value="">Todas</option></select></div>
+        <div class="col-md-3"><button class="btn btn-outline-light" type="button" id="limpar-filtros">Limpar filtros</button></div>
+      </div>
+    </section>
 
 
     <!-- ======================================

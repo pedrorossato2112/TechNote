@@ -3,6 +3,26 @@ const moeda = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
 });
+let respostaAtual = null;
+function filtrarVendas(vendas) {
+    const inicio = document.getElementById('filtro-inicio')?.value ?? '';
+    const fim = document.getElementById('filtro-fim')?.value ?? '';
+    const categoria = document.getElementById('filtro-categoria')?.value ?? '';
+    return vendas.filter((venda) => {
+        const data = venda.criadoEm.slice(0, 10);
+        const categorias = venda.categorias.split(',').map((nome) => nome.trim());
+        return (!inicio || data >= inicio) && (!fim || data <= fim)
+            && (!categoria || categorias.includes(categoria));
+    });
+}
+function carregarCategorias(vendas) {
+    const seletor = document.getElementById('filtro-categoria');
+    if (!seletor)
+        return;
+    const nomes = [...new Set(vendas.flatMap((venda) => venda.categorias.split(',').map((nome) => nome.trim())))]
+        .filter((nome) => nome && nome !== 'Sem categoria').sort();
+    seletor.replaceChildren(new Option('Todas', ''), ...nomes.map((nome) => new Option(nome, nome)));
+}
 function definirTexto(id, valor) {
     const elemento = document.getElementById(id);
     if (elemento) {
@@ -90,7 +110,8 @@ function renderizarRanking(vendas) {
         .join('')}</div>`;
 }
 function renderizarDashboard(dados) {
-    const indicadores = calcularIndicadores(dados.vendas);
+    const vendasFiltradas = filtrarVendas(dados.vendas);
+    const indicadores = calcularIndicadores(vendasFiltradas);
     const estoqueCritico = dados.estoque.filter((produto) => produto.estoque <= 3).length;
     definirTexto('indicador-produtos', String(dados.resumo.totalProdutos));
     definirTexto('indicador-pedidos', String(indicadores.totalPedidos));
@@ -101,7 +122,7 @@ function renderizarDashboard(dados) {
     definirTexto('indicador-ticket-medio', moeda.format(indicadores.ticketMedio));
     definirTexto('indicador-estoque-baixo', String(estoqueCritico));
     renderizarEstoqueCritico(dados.estoque);
-    renderizarRanking(dados.vendas);
+    renderizarRanking(vendasFiltradas);
     definirTexto('dashboard-api-status', 'DADOS ATUALIZADOS');
 }
 async function carregarDashboard() {
@@ -114,6 +135,8 @@ async function carregarDashboard() {
         if (!resposta.ok) {
             throw new Error(dados.erro ?? 'Falha ao consultar a API.');
         }
+        respostaAtual = dados;
+        carregarCategorias(dados.vendas);
         renderizarDashboard(dados);
     }
     catch (erro) {
@@ -126,4 +149,19 @@ async function carregarDashboard() {
         }
     }
 }
+for (const id of ['filtro-inicio', 'filtro-fim', 'filtro-categoria']) {
+    document.getElementById(id)?.addEventListener('change', () => {
+        if (respostaAtual)
+            renderizarDashboard(respostaAtual);
+    });
+}
+document.getElementById('limpar-filtros')?.addEventListener('click', () => {
+    for (const id of ['filtro-inicio', 'filtro-fim', 'filtro-categoria']) {
+        const campo = document.getElementById(id);
+        if (campo)
+            campo.value = '';
+    }
+    if (respostaAtual)
+        renderizarDashboard(respostaAtual);
+});
 void carregarDashboard();
